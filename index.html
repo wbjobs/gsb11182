@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preferences</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <aside id="sidebar">
+    <p data-i18n="sidebarContent">侧边栏内容</p>
+  </aside>
+
+  <main id="main">
+    <h1 data-i18n="title">偏好设置</h1>
+
+    <p id="memory-warning" class="warning" hidden></p>
+
+    <section class="setting-group">
+      <h2 data-i18n="theme">主题</h2>
+      <label><input type="radio" name="theme" value="light"> <span data-i18n="themeLight">亮色</span></label>
+      <label><input type="radio" name="theme" value="dark"> <span data-i18n="themeDark">暗色</span></label>
+      <label><input type="radio" name="theme" value="system"> <span data-i18n="themeSystem">跟随系统</span></label>
+    </section>
+
+    <section class="setting-group">
+      <h2 data-i18n="fontSize">字体大小</h2>
+      <label><input type="radio" name="fontSize" value="small"> <span data-i18n="fontSmall">小</span></label>
+      <label><input type="radio" name="fontSize" value="medium"> <span data-i18n="fontMedium">中</span></label>
+      <label><input type="radio" name="fontSize" value="large"> <span data-i18n="fontLarge">大</span></label>
+    </section>
+
+    <section class="setting-group">
+      <h2 data-i18n="language">语言</h2>
+      <select id="language-select">
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+      </select>
+    </section>
+
+    <section class="setting-group">
+      <h2 data-i18n="sidebar">侧边栏</h2>
+      <button id="sidebar-toggle" type="button" data-i18n="collapse">折叠</button>
+    </section>
+
+    <section class="setting-group">
+      <button id="reset-btn" type="button" data-i18n="reset">恢复默认</button>
+      <p class="meta"><span id="storage-mode"></span></p>
+    </section>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
