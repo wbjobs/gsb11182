@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8" /><title>smoke</title></head>
+<body>
+<script type="module">
+import { settingsStore, DEFAULTS } from '../js/settings.js';
+import { storage } from '../js/storage.js';
+
+const results = [];
+const check = (name, cond) => results.push((cond ? 'PASS' : 'FAIL') + ' ' + name);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function phase1() {
+  await settingsStore.init();
+
+  // 首次访问：无设置时使用默认值，不报错
+  check('first-visit-defaults', JSON.stringify(settingsStore.get()) === JSON.stringify({ ...DEFAULTS }));
+  check('storage-mode-valid', ['indexeddb', 'localstorage', 'memory'].includes(storage.mode));
+
+  // 修改设置并应用到 DOM
+  settingsStore.set({ theme: 'dark', fontSize: 18, language: 'en', sidebarCollapsed: true });
+  check('apply-theme', document.documentElement.dataset.theme === 'dark');
+  check('apply-font', document.documentElement.style.fontSize === '18px');
+  check('apply-lang', document.documentElement.lang === 'en');
+  check('apply-sidebar', document.body.classList.contains('sidebar-collapsed'));
+
+  // 跨上下文同步：iframe 加载后应读到已持久化的设置
+  const iframe = document.createElement('iframe');
+  iframe.src = '../index.html';
+  document.body.appendChild(iframe);
+  await new Promise((r) => { iframe.onload = r; });
+  await sleep(300);
+  check('iframe-loads-persisted', iframe.contentDocument.documentElement.dataset.theme === 'dark');
+
+  // 实时同步：父页面再改，iframe 通过 BroadcastChannel 立即更新
+  settingsStore.set({ fontSize: 14 });
+  await sleep(300);
+  check('iframe-live-sync', iframe.contentDocument.documentElement.style.fontSize === '14px');
+
+  // 存储被清空：iframe 清空 localStorage，父页面恢复默认
+  iframe.contentWindow.localStorage.clear();
+  await sleep(300);
+  check('cleared-restores-defaults',
+    settingsStore.get().theme === DEFAULTS.theme && settingsStore.get().fontSize === DEFAULTS.fontSize);
+
+  // 写入后刷新，进入 phase2 验证持久化
+  settingsStore.set({ theme: 'dark', fontSize: 19, language: 'en', sidebarCollapsed: true });
+  sessionStorage.setItem('smoke-phase', '2');
+  await sleep(300);
+  location.reload();
+}
+
+async function phase2() {
+  await settingsStore.init();
+  const s = settingsStore.get();
+  check('persist-after-reload',
+    s.theme === 'dark' && s.fontSize === 19 && s.language === 'en' && s.sidebarCollapsed === true);
+  finish();
+}
+
+function finish() {
+  const pre = document.createElement('pre');
+  pre.id = 'results';
+  pre.textContent = results.join('\n');
+  document.body.appendChild(pre);
+  document.title = results.some((r) => r.startsWith('FAIL')) ? 'SMOKE-FAIL' : 'SMOKE-PASS';
+}
+
+window.addEventListener('error', (e) => {
+  results.push('FAIL uncaught: ' + e.message);
+  finish();
+});
+
+if (sessionStorage.getItem('smoke-phase') === '2') phase2();
+else phase1();
+</script>
+</body>
+</html>
